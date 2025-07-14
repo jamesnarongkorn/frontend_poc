@@ -1,0 +1,9 @@
+services:
+  mongo:
+    image: mongodb/mongodb-atlas-local:8.0.4
+    ports:
+      - 27017:27017
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: admin
+      MONGODB_INITDB_ROOT_PASSWORD: admin
+      JAVA_TOOL_OPTIONS=-XX:UseSVE: 0
