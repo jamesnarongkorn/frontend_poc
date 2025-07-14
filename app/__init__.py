@@ -30,24 +30,24 @@ google_client = genai.Client(api_key=google_api_key)
 typhoon_gemma_12b_client = AsyncOpenAI(api_key=typhoon_gemma_12b_api_key, base_url=typhoon_gemma_12b_base_url)
 
 
-# # Load Langfuse varaibles
-# langfuse_public_key = os.getenv('LANGFUSE_SECRET_KEY')
-# langfuse_secret_key = os.getenv('LANGFUSE_PUBLIC_KEY')
-# langfuse_host = os.getenv('LANGFUSE_HOST')
+# Load Langfuse varaibles
+langfuse_public_key = os.getenv('LANGFUSE_SECRET_KEY')
+langfuse_secret_key = os.getenv('LANGFUSE_PUBLIC_KEY')
+langfuse_host = os.getenv('LANGFUSE_HOST')
 
-# # Initialize Langfuse
-# langfuse = Langfuse(
-#     public_key=langfuse_public_key,
-#     secret_key=langfuse_secret_key,
-#     host=langfuse_host
-# )
+# Initialize Langfuse
+langfuse = Langfuse(
+    public_key=langfuse_public_key,
+    secret_key=langfuse_secret_key,
+    host=langfuse_host
+)
 
-# # Validate Langfuse environment variables
-# if not langfuse_public_key or not langfuse_secret_key or not langfuse_host:
-#     raise ValueError('Missing required Langfuse environment variables.')
+# Validate Langfuse environment variables
+if not langfuse_public_key or not langfuse_secret_key or not langfuse_host:
+    raise ValueError('Missing required Langfuse environment variables.')
 
 # Initialize MongoDB Client
-client = MongoClient("mongodb://admin:admin@localhost:27018/?directConnection=true")
+client = MongoClient(os.getenv('MONGODB_URI'))
 db = client["demo"]
 collection = db["documents"]
 search_index_name = 'default'

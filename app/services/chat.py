@@ -12,7 +12,7 @@ from .rag_service import perform_hybrid_search
 router = APIRouter()
 
 
-# langfuse_context.configure(environment='poc')
+langfuse_context.configure(environment='poc')
 
 def format_docs_for_rag(docs: list) -> str:
     """
@@ -97,7 +97,7 @@ async def chat_endpoint(
         user_messages = [item.message for item in request.request if item.role == 'user']
         user_input = user_messages[-1].strip() if user_messages else 'สวัสดี'
 
-        # langfuse_context.update_current_trace(user_id=request.user_id, session_id=f"{user_input}")
+        langfuse_context.update_current_trace(session_id=f"{user_input}")
 
         # 1. Classify Intent
         print(f"\n--- Classifying Intent for: '{user_input}' ---")
