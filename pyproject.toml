@@ -5,16 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "docling>=2.39.0",
     "fastapi>=0.115.14",
-    "google-genai>=1.24.0",
     "ipykernel>=6.29.5",
     "langfuse==2.59.7",
     "openai>=1.93.0",
     "pandas>=2.3.0",
     "pydantic>=2.11.7",
     "pymongo>=4.13.2",
-    "pypdf2>=3.0.1",
     "pythainlp>=5.1.2",
     "streamlit>=1.46.1",
     "typing>=3.10.0.0",
