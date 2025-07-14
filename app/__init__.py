@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from langfuse import Langfuse
 from openai import AsyncOpenAI
 from pymongo import MongoClient
-from google import genai
 
 # Load environment variables from .env file
 load_dotenv()
@@ -26,7 +25,6 @@ if not jai_api_key or not jai_base_url or not jai_base_url:
 
 # Initialize OpenAI client
 jai_client = AsyncOpenAI(api_key=jai_api_key, base_url=jai_base_url)
-google_client = genai.Client(api_key=google_api_key)
 typhoon_gemma_12b_client = AsyncOpenAI(api_key=typhoon_gemma_12b_api_key, base_url=typhoon_gemma_12b_base_url)
 
 
