@@ -8,7 +8,7 @@ dependencies = [
     "fastapi>=0.115.14",
     "ipykernel>=6.29.5",
     "langfuse==2.59.7",
-    "openai>=1.93.0",
+    "openai==1.64.0",
     "pandas>=2.3.0",
     "pydantic>=2.11.7",
     "pymongo>=4.13.2",

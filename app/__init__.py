@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from langfuse import Langfuse
-from openai import AsyncOpenAI
+from langfuse.openai import AsyncOpenAI
 from pymongo import MongoClient
 
 # Load environment variables from .env file
