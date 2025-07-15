@@ -61,7 +61,7 @@ Classification (RAG or other):"""
 
     try:
         response = await jai_client.chat.completions.create(
-            model='jai-chat-1-3-2',
+            model='openthaigpt14b',
             messages=[
                 {'role': 'system', 'content': CLASSIFICATION_PROMPT},
                 {'role': 'user', 'content': prompt},
