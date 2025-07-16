@@ -2,6 +2,7 @@ import json
 import re
 import ast
 import openai
+import requests
 
 from fastapi import HTTPException
 from langfuse.decorators import observe
@@ -86,6 +87,37 @@ Classification (RAG or other):"""
 
 
 
+def replace_image_ids_with_markdown(text, repo_image_url_base="https://raw.githubusercontent.com/jamesnarongkorn/frontend_poc/bd4979a7483450c8aa0bef9a1060521821cd2ebc/renamed_images/"):
+    """
+    Replaces image IDs in a text with Markdown image links, keeping only the first occurrence of each image.
+
+    Args:
+        text (str): The input text containing image IDs (a chunk of streaming data).
+
+    Returns:
+        str: The text with image IDs replaced by Markdown image links, with only the first occurrence of each image.
+    """
+    processed_image_ids = set()    
+    image_id_regex = re.compile(r"\[IMG:([A-Za-z0-9_.]+\.png)\]")  # Match [IMG:D02_030.png]
+
+    def replace(match):
+        image_id = match.group(1)  # Extract the image ID
+        if image_id not in processed_image_ids:
+            image_url = f"{repo_image_url_base}{image_id}"  # Construct the full image URL
+            try:
+                response = requests.head(image_url)
+                if response.status_code != 404 and response.status_code < 400:
+                    processed_image_ids.add(image_id)  # Mark as processed
+                    return f"\n\n![{image_id}]({image_url})\n\n"  # Create the Markdown link
+                else:
+                    return ""
+            except requests.exceptions.RequestException as e:
+                print(f"Error checking URL {image_url}: {e}")
+        else:
+            return ""  # Replace with an empty string if already processed
+
+    return image_id_regex.sub(replace, text)
+
 @observe()
 async def generate_rag_answer(conversation_history: str, context: str) -> str:
     """Generates a RAG answer based on the context and query.
@@ -118,7 +150,9 @@ async def generate_rag_answer(conversation_history: str, context: str) -> str:
         # Extract response content
         response_content = response.choices[0].message.content.strip().replace("_final_with_captions.md", ".pdf")
         print(f'----------\nLLM response_content:\n{response_content}\n----------\n')
-        return response_content
+        markdown_output = replace_image_ids_with_markdown(response_content)
+        print(f'----------\nmarkdown_output:\n{markdown_output}\n----------\n')
+        return markdown_output
 
     except openai.OpenAIError as e:
         print(f'API error - {e}')
