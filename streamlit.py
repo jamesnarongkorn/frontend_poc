@@ -15,8 +15,8 @@ st.set_page_config(
 )
 
 # --- App Title and Description ---
-st.title("BMA Document Chatbot 🤖")
-st.write("Ask questions about your documents, and this bot will answer based on the provided knowledge base.")
+st.title("BMA Document Chatbot")
+st.write("แชทบอทสำหรับตอบคำถามเกี่ยวกับระบบ MIS ของกรุงเทพมหานคร")
 
 # Session State Initialization
 if "messages" not in st.session_state:
@@ -32,13 +32,13 @@ for message_data in st.session_state.messages:
                     st.info(f"Source {i+1}:\n\n---\n\n{source}")
 
 # User Input Handling
-if prompt := st.chat_input("Ask your question here..."):
+if prompt := st.chat_input("พิมพ์คำถามที่ต้องการ..."):
     st.session_state.messages.append({"role": "user", "message": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
+        with st.spinner("กำลังประมวลผล..."):
             try:
                 # 1. Create the payload object. This is correct.
                 request_payload = ChatRequest(request=st.session_state.messages)
