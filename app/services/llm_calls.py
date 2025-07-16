@@ -2,7 +2,7 @@ import json
 import re
 import ast
 import openai
-import requests
+import glob, os
 
 from fastapi import HTTPException
 from langfuse.decorators import observe
@@ -99,20 +99,14 @@ def replace_image_ids_with_markdown(text, repo_image_url_base="https://raw.githu
     """
     processed_image_ids = set()    
     image_id_regex = re.compile(r"\[IMG:([A-Za-z0-9_.]+\.png)\]")  # Match [IMG:D02_030.png]
+    valid_image_ids = [os.path.basename(x) for x in glob.glob('./renamed_images/*')]
 
     def replace(match):
         image_id = match.group(1)  # Extract the image ID
-        if image_id not in processed_image_ids:
+        if image_id not in processed_image_ids and image_id in valid_image_ids:
             image_url = f"{repo_image_url_base}{image_id}"  # Construct the full image URL
-            try:
-                response = requests.head(image_url)
-                if response.status_code != 404 and response.status_code < 400:
-                    processed_image_ids.add(image_id)  # Mark as processed
-                    return f"\n\n![{image_id}]({image_url})\n\n"  # Create the Markdown link
-                else:
-                    return ""
-            except requests.exceptions.RequestException as e:
-                print(f"Error checking URL {image_url}: {e}")
+            processed_image_ids.add(image_id)  # Mark as processed
+            return f"\n\n![{image_id}]({image_url})\n\n"  # Create the Markdown link
         else:
             return ""  # Replace with an empty string if already processed
 
