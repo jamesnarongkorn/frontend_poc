@@ -7,20 +7,31 @@ from app.utils.models import ChatRequest
 # --- Page Configuration ---
 st.set_page_config(
     page_title="BMA Document Chatbot",
-    page_icon="🤖",
     layout="wide"
 )
 
-# --- App Title and Description ---
-st.title("BMA Document Chatbot")
-st.write("แชทบอทสำหรับตอบคำถามเกี่ยวกับระบบ MIS ของกรุงเทพมหานคร")
+# --- Inline Title with Logo on the Right ---
+st.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <h1 style="margin: 0;">BMA Document Chatbot</h1>
+        <img src="https://officialadmin.bangkok.go.th/upload/web_header_logo_CgbiVyAGYL173505.png" width="60" style="margin-right: 15px;">
+    </div>
+    <p>แชทบอทสำหรับตอบคำถามเกี่ยวกับระบบ MIS ของกรุงเทพมหานคร</p>
+    """,
+    unsafe_allow_html=True
+)
+
+# # --- App Title and Description ---
+# st.title("BMA Document Chatbot")
+# st.write("แชทบอทสำหรับตอบคำถามเกี่ยวกับระบบ MIS ของกรุงเทพมหานคร")
 
 # Session State Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Create a container for the chat history
-chat_container = st.container(height=500)
+chat_container = st.container(border=True)
 
 # Display Chat History
 with chat_container:
