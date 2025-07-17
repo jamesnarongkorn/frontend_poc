@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from langfuse.decorators import langfuse_context, observe
 
-from app.utils.models import ChatRequest, ChatResponse, StreamEvent
+from app.utils.models import ChatRequest, ChatResponse
 from .llm_calls import (
     classify_intent, 
     generate_rag_answer, 
