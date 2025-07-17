@@ -2,7 +2,6 @@ import json
 import re
 import ast
 import openai
-import glob, os
 
 from fastapi import HTTPException
 from langfuse.decorators import observe
@@ -10,7 +9,7 @@ from langfuse.decorators import observe
 from typing import Dict, Literal, Optional, Any, List
 from pydantic import BaseModel
 
-from app import jai_client
+from app import jai_client, image_collection
 from app.utils.system_prompts import (
     CLASSIFICATION_PROMPT,
     RAG_PROMPT,
@@ -99,7 +98,9 @@ def replace_image_ids_with_markdown(text, repo_image_url_base="https://raw.githu
     """
     processed_image_ids = set()    
     image_id_regex = re.compile(r"\[IMG:([A-Za-z0-9_.]+\.png)\]")  # Match [IMG:D02_030.png]
-    valid_image_ids = [os.path.basename(x) for x in glob.glob('./renamed_images/*')]
+
+    image_ids = image_collection.find({}, {"image_id": 1, "_id": 0})
+    valid_image_ids = [f'{doc["image_id"]}.png' for doc in image_ids]
 
     def replace(match):
         image_id = match.group(1)  # Extract the image ID

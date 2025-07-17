@@ -48,6 +48,7 @@ if not langfuse_public_key or not langfuse_secret_key or not langfuse_host:
 client = MongoClient(os.getenv('MONGODB_URI'))
 db = client["demo"]
 collection = db["documents"]
+image_collection = db["images"]
 search_index_name = 'default'
 
 app = FastAPI()
