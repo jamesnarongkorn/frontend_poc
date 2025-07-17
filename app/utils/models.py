@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     Represents a multi-turn chat request containing a sequence of chat messages.
     """
     request: List[ChatMessage] = Field(..., description="A list of messages forming a multi-turn conversation.")
+    streaming: bool = Field(False, description="Whether to use streaming response from the LLM.")
 
     class Config:
         json_schema_extra = {
