@@ -1,6 +1,9 @@
 import streamlit as st
-import requests
 import json
+import asyncio # <-- Import asyncio
+
+# Import the logic function and the separator constant
+from app.services.chat_poc import get_chat_response, SOURCES_SEPARATOR
 
 # Page Configuration 
 st.set_page_config(
@@ -20,11 +23,6 @@ st.markdown(
 )
 
 # Configuration
-FASTAPI_BASE_URL = "http://127.0.0.1:8000/api/v1/chat"
-CHAT_ENDPOINT_NORMAL = f"{FASTAPI_BASE_URL}"
-CHAT_ENDPOINT_STREAM = f"{FASTAPI_BASE_URL}?streaming=true"
-SOURCES_SEPARATOR = "---_SOURCES_SEPARATOR_---"
-
 use_streaming = st.toggle("Enable Streaming Response", value=True)
 
 # Session State Initialization
@@ -37,100 +35,88 @@ chat_container = st.container(border=True)
 # Display Chat History from session state
 with chat_container:
     for message_data in st.session_state.messages:
-        # `message_data` is a dict like {"role": "...", "message": "...", "sources": [...]}
         with st.chat_message(message_data["role"]):
             st.markdown(message_data["message"])
-            # If the message is from the assistant and has sources, display them
             if "sources" in message_data and message_data["sources"]:
                 with st.expander("View Sources"):
                     for i, source in enumerate(message_data["sources"]):
-                        # Ensure source is a string before replacing
                         source_text = str(source).replace("#", "")
                         st.info(f"Source {i+1}:\n\n---\n\n{source_text}")
 
 # --- User Input Handling ---
-# This block now ONLY handles adding the user's message and triggering a rerun.
 if prompt := st.chat_input("พิมพ์คำถามที่ต้องการ..."):
     st.session_state.messages.append({"role": "user", "message": prompt})
     st.rerun()
 
 # --- Generate and Display Assistant Response ---
-# This block runs only when the last message is from the user.
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with chat_container:
         with st.chat_message("assistant"):
-            api_request_payload = {"request": st.session_state.messages}
 
             # --- Streaming Logic ---
             if use_streaming:
                 message_placeholder = st.empty()
-                full_response = ""
-                sources = []
-                header_buffer = ""
-                header_found = False
-
+                
                 try:
-                    with requests.post(CHAT_ENDPOINT_STREAM, json=api_request_payload, stream=True) as response:
-                        response.raise_for_status()
-                        
-                        # Use iter_content to get raw chunks for true streaming effect
-                        for chunk in response.iter_content(chunk_size=512, decode_unicode=True):
-                            if not chunk:
-                                continue
+                    # This async function will now return the final results
+                    async def stream_and_display():
+                        # Define variables locally within the async function
+                        local_full_response = ""
+                        local_sources = []
+                        local_header_buffer = ""
+                        local_header_found = False
 
-                            # If we haven't found the header yet, add chunk to buffer
-                            if not header_found:
-                                header_buffer += chunk
+                        async_generator = await get_chat_response(
+                            messages=st.session_state.messages,
+                            streaming=True
+                        )
+
+                        async for chunk in async_generator:
+                            if not local_header_found:
+                                local_header_buffer += chunk
                                 separator_with_newline = SOURCES_SEPARATOR + '\n'
                                 
-                                # Check if the separator is now in our buffer
-                                if separator_with_newline in header_buffer:
-                                    header_found = True
-                                    
-                                    # Split the buffer to isolate the header and the first part of the text
-                                    header_part, initial_text_chunk = header_buffer.split(separator_with_newline, 1)
+                                if separator_with_newline in local_header_buffer:
+                                    local_header_found = True
+                                    header_part, initial_text_chunk = local_header_buffer.split(separator_with_newline, 1)
                                     
                                     try:
-                                        sources = json.loads(header_part)
+                                        local_sources = json.loads(header_part)
                                     except json.JSONDecodeError:
-                                        # This happens if the backend sent an error before the separator.
-                                        # Treat the whole buffer as content.
                                         st.warning("Could not parse sources from the stream.")
-                                        full_response += header_buffer
-
+                                        local_full_response += local_header_buffer
                                     else:
-                                        # Success, now add the first text chunk to the response
-                                        full_response += initial_text_chunk
+                                        local_full_response += initial_text_chunk
                                     
-                                    message_placeholder.markdown(full_response + "▌")
+                                    message_placeholder.markdown(local_full_response + "▌")
+                            else:
+                                local_full_response += chunk
+                                message_placeholder.markdown(local_full_response + "▌")
 
-                            else: # Header was already found, so this is just text
-                                full_response += chunk
-                                message_placeholder.markdown(full_response + "▌")
+                        if not local_header_found:
+                            local_full_response = local_header_buffer
+                        
+                        # Return the final state of the variables
+                        return local_full_response, local_sources
 
-                    # If the stream ends before finding the separator, the entire buffer is the response
-                    if not header_found:
-                        full_response = header_buffer
+                    # Run the async function and capture the returned values
+                    full_response, sources = asyncio.run(stream_and_display())
 
                     # Final update after the stream is complete
                     message_placeholder.markdown(full_response)
-
-                    # Display sources if they were found
+                    
                     if sources:
                         with st.expander("View Sources", expanded=False):
                             for i, source in enumerate(sources):
                                 source_text = str(source).replace("#", "")
                                 st.info(f"Source {i+1}:\n\n---\n\n{source_text}")
                     
-                    # Save the complete response and sources to session state
                     st.session_state.messages.append({
                         "role": "assistant",
                         "message": full_response,
                         "sources": sources 
                     })
 
-                except requests.exceptions.RequestException as e:
-                    st.error(f"Could not connect to the backend API. Error: {e}")
                 except Exception as e:
                     st.error(f"An unexpected error occurred: {e}")
 
@@ -138,12 +124,13 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             else:
                 with st.spinner("Thinking..."):
                     try:
-                        response = requests.post(CHAT_ENDPOINT_NORMAL, json=api_request_payload)
-                        response.raise_for_status()
-
-                        data = response.json()
-                        llm_response = data.get("response", "Sorry, I couldn't get a response.")
-                        source_chunks = data.get("source_documents", [])
+                        response_data = asyncio.run(get_chat_response(
+                            messages=st.session_state.messages,
+                            streaming=False
+                        ))
+                        
+                        llm_response = response_data.get("response", "Sorry, I couldn't get a response.")
+                        source_chunks = response_data.get("sources", [])
 
                         st.markdown(llm_response)
 
@@ -159,13 +146,9 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
                             "sources": source_chunks
                         })
 
-                    except requests.exceptions.RequestException as e:
-                        error_message = f"Could not connect to the backend API. Error: {e}"
-                        st.error(error_message)
                     except Exception as e:
                         error_message = f"An unexpected error occurred: {e}"
                         st.error(error_message)
-
 
 ### NON-STREAMING VERSION
 # import streamlit as st
