@@ -83,7 +83,7 @@ Classification (RAG or other):"""
 
 
 class ImageReplacer:
-    def __init__(self, valid_image_ids, repo_image_url_base="https://raw.githubusercontent.com/jamesnarongkorn/frontend_poc/bd4979a7483450c8aa0bef9a1060521821cd2ebc/renamed_images/"):
+    def __init__(self, valid_image_ids, repo_image_url_base="https://raw.githubusercontent.com/jamesnarongkorn/frontend_poc/refs/heads/main/renamed_images/"):
         self.repo_image_url_base = repo_image_url_base
         self.processed_image_ids = set()
         self.valid_image_ids = valid_image_ids
