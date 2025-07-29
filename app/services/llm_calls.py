@@ -6,7 +6,7 @@ from langfuse.decorators import observe
 
 from typing import AsyncGenerator
 
-from app import jai_client, typhoon_gemma_12b_client, google_client
+from app import jai_client, typhoon_gemma_12b_client
 from app.utils.system_prompts import (
     CLASSIFICATION_PROMPT,
     RAG_PROMPT,
