@@ -1,4 +1,4 @@
-import json
+import json, re
 import traceback
 from typing import AsyncGenerator, List, Dict
 
@@ -31,11 +31,15 @@ def format_docs_for_rag(docs: list) -> str:
     for i, doc in enumerate(docs):
         context_block = f"""---
 Context Document {i+1}:
+Context: {doc.get('contextual_summary', '').strip()}
 Content: {doc.get('chunk_content', '').strip()}
 Source: {doc.get('source_document', 'N/A')}
 ---"""
         formatted_context.append(context_block)
-    return "\n\n".join(formatted_context)
+    final_context = "\n\n".join(formatted_context)
+    # cleaned_text = re.sub(r"<!--.*?-->", "", final_context)
+    return final_context
+
 
 @observe()
 async def get_chat_response(
