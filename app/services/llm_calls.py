@@ -6,7 +6,7 @@ from langfuse.decorators import observe
 
 from typing import AsyncGenerator
 
-from app import jai_client, typhoon_gemma_12b_client
+from app import jai_client, typhoon_gemma_12b_client, google_client
 from app.utils.system_prompts import (
     CLASSIFICATION_PROMPT,
     RAG_PROMPT,
@@ -131,8 +131,8 @@ async def generate_rag_answer(conversation_history: str, context: str, image_rep
 """
     
     try:
-        response = await jai_client.chat.completions.create(
-            model='jai-chat-1-3-2',
+        response = await typhoon_gemma_12b_client.chat.completions.create(
+            model='typhoon-gemma-12b',
             messages=[
                 {'role': 'system', 'content': RAG_PROMPT.format(context=context)},
                 {'role': 'user', 'content': prompt},
@@ -176,8 +176,8 @@ async def generate_rag_answer_stream(conversation_history: str, context: str, im
 """
 
     try:
-        response = await jai_client.chat.completions.create(
-            model='jai-chat-1-3-2',
+        response = await typhoon_gemma_12b_client.chat.completions.create(
+            model='typhoon-gemma-12b',
             messages=[
                 {'role': 'system', 'content': RAG_PROMPT.format(context=context)},
                 {'role': 'user', 'content': prompt},
