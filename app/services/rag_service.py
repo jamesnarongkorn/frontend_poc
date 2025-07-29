@@ -68,7 +68,7 @@ async def perform_hybrid_search(
     """
     print(f"--- Performing Article Search for: '{query}' ---")
 
-    top_k = 5
+    top_k = 7
     vector_results, keyword_results = [], []
 
     # Perform Vector Search
@@ -88,14 +88,15 @@ async def perform_hybrid_search(
                 '_id': 1,
                 'chunk_id': 1,
                 'source_document': 1,
+                'contextual_summary': 1,
                 'chunk_content': 1,
                 'score': {'$meta': 'vectorSearchScore'},
                 }
             }
         ])
         vector_results = list(vector_cursor)
-        print(f"[Vector Search] Retrieved {len(vector_results)} results.")
-        for i in vector_results: print(f"Vector search results: {i.get('chunk_content', 'No Content')[:40]} - Score: {i.get('score', 'No Score')}")
+        # print(f"[Vector Search] Retrieved {len(vector_results)} results.")
+        # for i in vector_results: print(f"Vector search results: {i.get('chunk_content', 'No Content')[:40]} - Score: {i.get('score', 'No Score')}")
     except Exception as e:
         print(f"[Error] Article Semantic Search failed: {e}")
 
@@ -119,6 +120,7 @@ async def perform_hybrid_search(
             {'$project': {
                 '_id': 1,
                 'chunk_id': 1,
+                'contextual_summary': 1,
                 'source_document': 1,
                 'chunk_content': 1,
                 'score': {'$meta': 'searchScore'},
@@ -127,8 +129,8 @@ async def perform_hybrid_search(
             {'$limit': top_k * 2}
         ])
         keyword_results = list(keyword_cursor)
-        print(f"[Keyword Search] Retrieved {len(keyword_results)} results.")
-        for i in keyword_results: print(f"Keyword search results: {i.get('chunk_content', 'No Content')[:40]} - Score: {i.get('score', 'No Score')}")
+        # print(f"[Keyword Search] Retrieved {len(keyword_results)} results.")
+        # for i in keyword_results: print(f"Keyword search results: {i.get('chunk_content', 'No Content')[:40]} - Score: {i.get('score', 'No Score')}")
     except Exception as e:
         print(f"[Error] Article Keyword Search failed: {e}")
 
