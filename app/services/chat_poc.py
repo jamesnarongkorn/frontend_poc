@@ -1,7 +1,6 @@
 import json, re
 import traceback
 from typing import AsyncGenerator, List, Dict
-from FlagEmbedding import FlagReranker
 
 from langfuse.decorators import langfuse_context, observe
 
@@ -41,39 +40,6 @@ Source: {doc.get('source_document', 'N/A')}
     # cleaned_text = re.sub(r"<!--.*?-->", "", final_context)
     return final_context
 
-def format_docs_for_rag(docs: list) -> str:
-    """
-    Formats a list of document chunks into a single string for RAG context.
-    """    
-    formatted_context = []
-    for i, doc in enumerate(docs):
-        context_block = f"""---
-Context Document {i+1}:
-Context: {doc.get('contextual_summary', '').strip()}
-Content: {doc.get('chunk_content', '').strip()}
-Source: {doc.get('source_document', 'N/A')}
----"""
-        formatted_context.append(context_block)
-    final_context = "\n\n".join(formatted_context)
-    # cleaned_text = re.sub(r"<!--.*?-->", "", final_context)
-    return final_context
-
-def format_docs_for_reranker(docs: list) -> list:
-    """
-    Formats a list of document chunks into a list of strings,
-    where each string represents a single document chunk formatted for reranking.
-    """
-    formatted_documents = []
-    for i, doc in enumerate(docs):
-        context_block = f"""Context: {doc.get('contextual_summary', '').strip()}\n
-Content: {doc.get('chunk_content', '').strip()}\n
-Source: {doc.get('source_document', 'N/A')}
-"""
-        formatted_documents.append(context_block)  # Append each document as a string
-
-    return formatted_documents  # Return a list of strings
-
-reranker = FlagReranker('BAAI/bge-reranker-v2-m3', use_fp16=True)
 
 @observe()
 async def get_chat_response(
@@ -120,21 +86,15 @@ async def get_chat_response(
                     rewritten_query = await rewrite_query(conversation_history) or user_input
                     print(f'Rewritten Query: {rewritten_query}')
                     docs = await perform_hybrid_search(rewritten_query)
-                    formatted_context = format_docs_for_reranker(docs)
-
-                    input_pairs = [(rewritten_query, doc) for doc in formatted_context]
-                    scores = reranker.compute_score(input_pairs)
-                    document_scores = list(zip(formatted_context, scores))
-                    ranked_documents = sorted(document_scores, key=lambda x: x[1], reverse=True)
-                    ranked_documents = [doc[0] for doc in ranked_documents[:5]]
-                    print(f"Ranked Documents: {ranked_documents}")
-                    # source_docs_content = [doc.get('chunk_content', '') for doc in docs]
+                    formatted_context = format_docs_for_rag(docs)
                     
-                    yield json.dumps(ranked_documents) + '\n'
+                    source_docs_content = [doc.get('chunk_content', '') for doc in docs]
+                    
+                    yield json.dumps(source_docs_content) + '\n'
                     yield SOURCES_SEPARATOR + '\n'
 
                     local_image_replacer = ImageReplacer(valid_image_ids=valid_image_ids)
-                    async for chunk in generate_rag_answer_stream(ranked_documents, user_input, local_image_replacer):
+                    async for chunk in generate_rag_answer_stream(formatted_context, user_input, local_image_replacer):
                         yield chunk
                 
                 else: # "other" or any other intent
