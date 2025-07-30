@@ -62,6 +62,8 @@ async def get_chat_response(
         user_messages = [item["message"] for item in messages if item["role"] == 'user']
         user_input = user_messages[-1].strip() if user_messages else 'สวัสดี'
 
+        langfuse_context.update_current_trace(session_id=f"{user_input}")
+
         print(f"\n--- Classifying Intent for: '{user_input}' ---")
         intent = await classify_intent(conversation_history, user_input)
         print(f'Classified Intent: {intent}')
