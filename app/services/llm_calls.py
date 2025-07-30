@@ -176,8 +176,8 @@ async def generate_rag_answer_stream(conversation_history: str, context: str, im
 """
 
     try:
-        response = await typhoon_gemma_12b_client.chat.completions.create(
-            model='typhoon-gemma-12b',
+        response = await jai_client.chat.completions.create(
+            model='openthaigpt72b',
             messages=[
                 {'role': 'system', 'content': RAG_PROMPT.format(context=context)},
                 {'role': 'user', 'content': prompt},

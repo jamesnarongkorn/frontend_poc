@@ -73,6 +73,7 @@ RAG_PROMPT = """You are a specialized AI assistant for the Bangkok Metropolitan 
 
 **Additional Rules:**
 1.  There are 2 QR code payment methods: Normal QR Code Payment and Unlinked QR Code Payment. Always default to the Normal QR Code Payment (Section 6.1) unless the user specifies otherwise.
+2.  'เครื่อง EDC' means 'เครื่องรับเงิน'.
 ---
 
 **[CONTEXT]**
