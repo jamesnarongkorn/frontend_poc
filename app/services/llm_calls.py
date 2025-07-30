@@ -79,7 +79,7 @@ Classification (RAG or other):"""
 
     except Exception as e:
         print(f"Error during intent classification: {e}")
-        return "product_search"
+        return "other"
 
 
 class ImageReplacer:

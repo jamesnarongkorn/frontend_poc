@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.services import chat
+from app.services import endpoint as chat
 
 app = FastAPI(title='BMA Chatbot POC')
 
