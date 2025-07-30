@@ -152,7 +152,6 @@ async def chat_endpoint(
                     # 3. Stream the text chunks from the LLM
                     local_image_replacer = ImageReplacer(valid_image_ids=valid_image_ids)
                     async for chunk in generate_rag_answer_stream(formatted_context, user_input, local_image_replacer):
-                        print(chunk)
                         yield chunk
                 
                 else:
@@ -163,7 +162,6 @@ async def chat_endpoint(
                     
                     # 3. Stream the non-RAG answer
                     async for chunk in generate_non_rag_answer_stream(conversation_history, user_input):
-                        print(chunk)
                         yield chunk
 
             except Exception as e:

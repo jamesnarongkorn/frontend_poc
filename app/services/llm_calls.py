@@ -4,9 +4,10 @@ import openai
 from fastapi import HTTPException
 from langfuse.decorators import observe
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Dict, Any
 
-from app import jai_client, typhoon_gemma_12b_client
+from app import jai_client, typhoon_gemma_12b_client, gemini_client
+from app.utils.models import RankedDocuments
 from app.utils.system_prompts import (
     CLASSIFICATION_PROMPT,
     RAG_PROMPT,
@@ -131,8 +132,8 @@ async def generate_rag_answer(conversation_history: str, context: str, image_rep
 """
     
     try:
-        response = await jai_client.chat.completions.create(
-            model='openthaigpt72b',
+        response = await typhoon_gemma_12b_client.chat.completions.create(
+            model='typhoon-gemma-12b',
             messages=[
                 {'role': 'system', 'content': RAG_PROMPT.format(context=context)},
                 {'role': 'user', 'content': prompt},
@@ -144,9 +145,9 @@ async def generate_rag_answer(conversation_history: str, context: str, image_rep
 
         # Extract response content
         response_content = response.choices[0].message.content.strip().replace("_final_with_captions.md", ".pdf")
-        print(f'----------\nLLM response_content:\n{response_content}\n----------\n')
+        # print(f'----------\nLLM response_content:\n{response_content}\n----------\n')
         markdown_output = image_replacer.replace_image_ids_with_markdown(response_content)
-        print(f'----------\nmarkdown_output:\n{markdown_output}\n----------\n')
+        # print(f'----------\nmarkdown_output:\n{markdown_output}\n----------\n')
         return markdown_output
 
     except openai.OpenAIError as e:
@@ -176,8 +177,8 @@ async def generate_rag_answer_stream(conversation_history: str, context: str, im
 """
 
     try:
-        response = await jai_client.chat.completions.create(
-            model='openthaigpt72b',
+        response = await typhoon_gemma_12b_client.chat.completions.create(
+            model='typhoon-gemma-12b',
             messages=[
                 {'role': 'system', 'content': RAG_PROMPT.format(context=context)},
                 {'role': 'user', 'content': prompt},
@@ -360,3 +361,65 @@ async def rewrite_query(conversation_history: str) -> dict:
     except Exception as e:
         print(f'Error in query rewriting: {e}')
         return {'rewritten_query': ''}
+    
+
+def rank_relevant_chunks(user_query: str, docs: List[Dict[str, Any]]) -> List[int]:
+    """
+    Ranks a list of document chunks using Gemini with JSON mode based on their 
+    relevance to a user query.
+
+    Args:
+        user_query: The user's search query.
+        docs: A list of dictionaries, where each dictionary represents a document chunk
+              with at least a 'chunk_content' key.
+
+    Returns:
+        A list of 0-indexed integers representing the top 3 most relevant chunks,
+        or an empty list if an error occurs.
+    """
+    if not docs:
+        return []
+
+    try:
+        system_instruction = (
+            "You are an expert relevance ranking engine. Your task is to analyze a user query and a list "
+            "of document chunks. You must rank the chunks based on how well they answer the user's query. "
+            "Return your response in the specified JSON format, providing a list of the 1-indexed "
+            "chunk numbers from most to least relevant."
+        )
+        user_prompt = f"""Given the user query: "{user_query}"
+
+        And the following document chunks:
+        """
+        for i, doc in enumerate(docs):
+            user_prompt += f"\nChunk {i + 1}\n{doc.get('chunk_content', 'No content available.')}\n"
+
+        response = google_client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=user_prompt,
+            config={
+                'system_instruction': system_instruction,
+                'response_mime_type': 'application/json',
+                'response_schema': RankedDocuments,
+                'temperature': 0.1,
+                'seed': 42,
+            },   
+        )
+
+        ranked_docs: RankedDocuments = response.parsed
+        one_based_indices = ranked_docs.ranked_indices
+
+        # Convert to 0-indexed and validate
+        zero_based_indices = [
+            idx - 1 for idx in one_based_indices if 0 < idx <= len(docs)
+        ]
+        
+        # Use the valid indices to create a new, ranked list of documents
+        ranked_docs = [docs[i] for i in zero_based_indices]
+        
+        # Return the top 3 ranked documents
+        return ranked_docs[:3]
+
+    except Exception as e:
+        print(f"!!! Critical Error during Gemini ranking call: {e}")
+        return [] # Return empty list on failure

@@ -12,6 +12,7 @@ from .llm_calls import (
     generate_non_rag_answer, 
     generate_non_rag_answer_stream, 
     rewrite_query, 
+    rank_relevant_chunks,
     ImageReplacer,
 )
 from .rag_service import perform_hybrid_search
@@ -86,9 +87,10 @@ async def get_chat_response(
                     rewritten_query = await rewrite_query(conversation_history) or user_input
                     print(f'Rewritten Query: {rewritten_query}')
                     docs = await perform_hybrid_search(rewritten_query)
-                    formatted_context = format_docs_for_rag(docs)
+                    ranked_docs = rank_relevant_chunks(rewritten_query, docs)
+                    formatted_context = format_docs_for_rag(ranked_docs)
                     
-                    source_docs_content = [doc.get('chunk_content', '') for doc in docs]
+                    source_docs_content = [doc.get('chunk_content', '') for doc in ranked_docs]
                     
                     yield json.dumps(source_docs_content) + '\n'
                     yield SOURCES_SEPARATOR + '\n'
@@ -123,9 +125,10 @@ async def get_chat_response(
                 print(f'Rewritten Query: {rewritten_query}')
 
                 docs = await perform_hybrid_search(rewritten_query)
-                formatted_context = format_docs_for_rag(docs)
+                ranked_docs = rank_relevant_chunks(rewritten_query, docs)                
+                formatted_context = format_docs_for_rag(ranked_docs)
                 response_content = await generate_rag_answer(formatted_context, user_input, local_image_replacer)
-                source_docs = [doc.get('chunk_content', '') for doc in docs]
+                source_docs = [doc.get('chunk_content', '') for doc in ranked_docs]
             
             else: # "other" or any other intent
                 response_content = await generate_non_rag_answer(conversation_history, user_input)

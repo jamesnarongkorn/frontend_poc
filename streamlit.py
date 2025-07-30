@@ -15,7 +15,7 @@ st.markdown(
     """
     <div style="display: flex; align-items: center;">
         <h1 style="margin: 0;">BMA Document Chatbot</h1>
-        <img src="https://officialadmin.bangkok.go.th/upload/web_header_logo_CgbiVyAGYL173505.png" width="60" style="margin-right: 15px;">
+        <img src="https://officialadmin.bangkok.go.th/Admin/images/logo.png" width="60" style="margin-right: 15px;">
     </div>
     <p>แชทบอทสำหรับตอบคำถามเกี่ยวกับระบบ MIS ของกรุงเทพมหานคร</p>
     """,
