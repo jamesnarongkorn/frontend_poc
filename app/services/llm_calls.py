@@ -6,7 +6,7 @@ from langfuse.decorators import observe
 
 from typing import AsyncGenerator, List, Dict, Any
 
-from app import jai_client, typhoon_gemma_12b_client, gemini_client
+from app import jai_client, typhoon_gemma_12b_client, google_client
 from app.utils.models import RankedDocuments
 from app.utils.system_prompts import (
     CLASSIFICATION_PROMPT,
