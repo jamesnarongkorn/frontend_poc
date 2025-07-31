@@ -38,5 +38,5 @@ class RankedDocuments(BaseModel):
     """Schema for the ranked list of document indices."""
     ranked_indices: List[int] = Field(
         ..., 
-        description="A list of 1-indexed integers of the top 3 most relevant document chunks, ordered from most to least relevant."
+        description="A list of 1-indexed integers of the top most relevant document chunks, ordered from most to least relevant."
     )

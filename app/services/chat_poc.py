@@ -98,7 +98,11 @@ async def get_chat_response(
                     yield SOURCES_SEPARATOR + '\n'
 
                     local_image_replacer = ImageReplacer(valid_image_ids=valid_image_ids)
-                    async for chunk in generate_rag_answer_stream(formatted_context, user_input, local_image_replacer):
+                    async for chunk in generate_rag_answer_stream(
+                        conversation_history=user_input,
+                        context=formatted_context, 
+                        image_replacer=local_image_replacer
+                        ):
                         yield chunk
                 
                 else: # "other" or any other intent
@@ -129,7 +133,10 @@ async def get_chat_response(
                 docs = await perform_hybrid_search(rewritten_query)
                 ranked_docs = rank_relevant_chunks(rewritten_query, docs)                
                 formatted_context = format_docs_for_rag(ranked_docs)
-                response_content = await generate_rag_answer(formatted_context, user_input, local_image_replacer)
+                response_content = await generate_rag_answer(
+                    conversation_history=user_input, 
+                    context=formatted_context, 
+                    image_replacer=local_image_replacer)
                 source_docs = [doc.get('chunk_content', '') for doc in ranked_docs]
             
             else: # "other" or any other intent
